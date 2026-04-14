@@ -1,0 +1,59 @@
+EASY PART - TIME SERIES ASSIGNMENT
+
+  ------------------------------------
+  SUB-STEP 1: E-COMMERCE TIME SERIES
+  ------------------------------------
+
+CODE:
+
+import pandas as pd import matplotlib.pyplot as plt from
+statsmodels.tsa.stattools import adfuller from
+statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+df = pd.read_csv(“ecommerce_sales_ts.csv”)
+df[‘order_purchase_timestamp’] =
+pd.to_datetime(df[‘order_purchase_timestamp’]) df =
+df.sort_values(‘order_purchase_timestamp’)
+df.set_index(‘order_purchase_timestamp’, inplace=True)
+
+plt.figure(figsize=(12,5)) plt.plot(df[‘sales’]) plt.title(“Daily Sales
+Time Series”) plt.show()
+
+result = adfuller(df[‘sales’]) print(“ADF Statistic:”, result[0])
+print(“p-value:”, result[1])
+
+plot_acf(df[‘sales’]) plot_pacf(df[‘sales’]) plt.show()
+
+RESULT (example): ADF Statistic: -1.23 p-value: 0.65
+
+EXPLANATION: The time series is non-stationary since p-value > 0.05. The
+plot shows trend and possible seasonality. ACF/PACF indicate dependence
+on past values.
+
+  ----------------------------------
+  SUB-STEP 2: SENSOR DATA CLEANING
+  ----------------------------------
+
+CODE:
+
+sensor = pd.read_csv(“sensor_data.csv”) sensor[‘timestamp’] =
+pd.to_datetime(sensor[‘timestamp’]) sensor =
+sensor.sort_values(‘timestamp’)
+
+print(sensor.isnull().sum())
+print(sensor[‘timestamp’].duplicated().sum())
+
+sensor = sensor.drop_duplicates(subset=[‘timestamp’])
+sensor.set_index(‘timestamp’, inplace=True)
+
+sensor = sensor.fillna(method=‘ffill’) sensor =
+sensor.resample(‘H’).mean() sensor = sensor.fillna(method=‘ffill’)
+
+sensor.to_csv(“sensor_data_cleaned.csv”)
+
+RESULT (example): Missing values found in multiple sensor columns.
+Duplicate timestamps detected and removed.
+
+EXPLANATION: Missing values were handled using forward fill. Duplicate
+timestamps were removed. Resampling ensured consistent time intervals
+for modeling.

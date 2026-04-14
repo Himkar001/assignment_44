@@ -1,0 +1,81 @@
+HARD PART - TIME SERIES ASSIGNMENT
+
+  ------------------------------
+  SUB-STEP 6: RULE VS ML MODEL
+  ------------------------------
+
+CODE:
+
+THRESHOLD = sensor[‘sensor_1’].mean() + 2 * sensor[‘sensor_1’].std()
+sensor[‘rule_pred’] = (sensor[‘sensor_1’] > THRESHOLD).astype(int)
+
+sensor[‘model_pred’] = model.predict(X)
+
+COST_FN = 1000 COST_FP = 100
+
+def compute_cost(y_true, y_pred): cost = 0 for yt, yp in zip(y_true,
+y_pred): if yt == 1 and yp == 0: cost += COST_FN elif yt == 0 and yp ==
+1: cost += COST_FP return cost
+
+y_true = y
+
+rule_cost = compute_cost(y_true, sensor[‘rule_pred’]) model_cost =
+compute_cost(y_true, sensor[‘model_pred’])
+
+print(“Rule Cost:”, rule_cost) print(“Model Cost:”, model_cost)
+
+RESULT (example): Rule Cost: 250000 Model Cost: 180000
+
+EXPLANATION: The rule-based approach is simple but less flexible. The ML
+model captures complex patterns and reduces overall cost. Model is
+preferred when it significantly reduces missed failures.
+
+  -------------------------------
+  SUB-STEP 7: COST OPTIMIZATION
+  -------------------------------
+
+CODE:
+
+import numpy as np from sklearn.metrics import f1_score
+
+NUM_SENSORS = 100000
+
+cost_per_sample = model_cost / len(y_true) daily_cost =
+cost_per_sample * NUM_SENSORS
+
+print(“Estimated Daily Cost:”, daily_cost)
+
+probs = model.predict_proba(X)[:,1]
+
+thresholds = np.linspace(0, 1, 50)
+
+best_cost = float(‘inf’) best_threshold = 0
+
+for t in thresholds: preds = (probs > t).astype(int) cost =
+compute_cost(y_true, preds)
+
+    if cost < best_cost:
+        best_cost = cost
+        best_threshold = t
+
+print(“Best Threshold:”, best_threshold) print(“Minimum Cost:”,
+best_cost)
+
+best_f1 = 0 best_f1_threshold = 0
+
+for t in thresholds: preds = (probs > t).astype(int) f1 =
+f1_score(y_true, preds)
+
+    if f1 > best_f1:
+        best_f1 = f1
+        best_f1_threshold = t
+
+print(“Best F1 Threshold:”, best_f1_threshold)
+
+RESULT (example): Estimated Daily Cost: 1,800,000 Best Threshold: 0.32
+Best F1 Threshold: 0.55
+
+EXPLANATION: The optimal threshold based on cost is lower than the
+F1-based threshold. This is because missing failures is much more
+expensive than false alarms. Hence, business-driven optimization is
+preferred over F1 score.
